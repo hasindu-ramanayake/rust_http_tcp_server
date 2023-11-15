@@ -3,6 +3,23 @@ use std::net::TcpStream;
 use std::io::prelude::*;
 use std::fs;
 
+use server::ThreadPool;
+
+
+fn main() {
+    
+    let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+    // creating a threadPool;
+    let thread_pool = ThreadPool::new(4);
+
+    for stream in listener.incoming() {
+        let strm = stream.unwrap();
+        thread_pool.execute( || {
+            handle_connection(strm);
+        });
+    }
+}
+
 
 fn handle_connection(mut stream: TcpStream) {
     let mut buff: [u8; 1024] = [0; 1024];
@@ -23,22 +40,10 @@ fn handle_connection(mut stream: TcpStream) {
         status,
         content.len(),
         content
-    ); 
+    );
 
     stream.write(res.as_bytes()).unwrap();
     stream.flush().unwrap();
     
 
-}
-
-
-
-fn main() {
-    
-    let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
-    for stream in listener.incoming() {
-        let strm = stream.unwrap();
-        println!("Connection established");
-        handle_connection(strm);
-    }
 }
